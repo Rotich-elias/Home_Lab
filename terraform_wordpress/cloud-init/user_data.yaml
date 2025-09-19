@@ -1,0 +1,40 @@
+#cloud-config
+users:
+  - name: ubuntu
+    ssh-authorized-keys:
+      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKEek1GFygPnUn3ng2j04ylyzGJeIvreBM9CMFjmKY9O elgeiy8@gmail.com
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    groups: sudo
+    shell: /bin/bash
+
+packages:
+  - docker.io
+  - docker-compose
+  - git
+
+runcmd:
+  - systemctl enable docker
+  - systemctl start docker
+  - mkdir -p /home/ubuntu/wordpress
+  - cd /home/ubuntu/wordpress
+  - cat <<EOF > docker-compose.yml
+    version: '3.8'
+    services:
+      db:
+        image: mysql:8
+        environment:
+          MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_DATABASE: wordpress
+          MYSQL_USER: wpuser
+          MYSQL_PASSWORD: wppassword
+      wordpress:
+        image: wordpress:6.5-apache
+        ports:
+          - "8080:80"
+        environment:
+          WORDPRESS_DB_HOST: db:3306
+          WORDPRESS_DB_USER: wpuser
+          WORDPRESS_DB_PASSWORD: wppassword
+          WORDPRESS_DB_NAME: wordpress
+    EOF
+  - docker-compose up -d
